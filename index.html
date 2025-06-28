@@ -231,7 +231,7 @@
       const pair = PAIRS[selected];
       if (!pair) return;
 
-      const url = new URL("https://xdb-orderbook.onrender.com//order_book");
+      const url = new URL("https://xdb-orderbook-7y6k.onrender.com/order_book");
       Object.entries(pair.selling).forEach(([k, v]) => url.searchParams.append("selling_asset_" + k, v));
       Object.entries(pair.buying).forEach(([k, v]) => url.searchParams.append("buying_asset_" + k, v));
 
