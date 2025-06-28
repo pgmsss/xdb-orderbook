@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>XDB Order Book Viewer</title>
+  <style>
+    :root {
+      --primary-blue: #0056FF;
+      --primary-blue-dark: #003db2;
+      --bg-color: #f5f8fd;
+      --text-color: #222;
+      --card-bg: #fff;
+      --accent-color: var(--primary-blue);
+      --ask-color: #e74c3c;
+      --bid-color: #27ae60;
+      --border-radius: 18px;
+      --shadow: 0 2px 12px 0 rgba(30, 60, 120, 0.07);
+      --border: 1px solid #e5eaf2;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Inter', Arial, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 40px auto 0 auto;
+      padding: 0 20px 40px 20px;
+      flex: 1 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 0;
+    }
+    .header h1 {
+      color: var(--primary-blue);
+      font-size: 2.1rem;
+      margin: 0 0 10px 0;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .spread-top {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      background: var(--card-bg);
+      box-shadow: var(--shadow);
+      border-radius: var(--border-radius);
+      padding: 16px 32px;
+      border: var(--border);
+      font-size: 1.2rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      margin: 0 auto;
+      max-width: 360px;
+    }
+    .spread-value {
+      font-size: 1.4rem;
+      color: var(--primary-blue);
+      font-weight: bold;
+      margin-left: 8px;
+    }
+    .trend-icon {
+      font-size: 1.7rem;
+      margin-left: 10px;
+      margin-top: 2px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+    }
+    select {
+      padding: 10px 16px;
+      background: #f5f8fd;
+      color: var(--text-color);
+      border: 1px solid #e5eaf2;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      outline: none;
+      transition: border 0.2s;
+    }
+    select:focus {
+      border: 1.5px solid var(--primary-blue);
+    }
+
+    .order-book {
+      display: flex;
+      flex-direction: row;
+      gap: 32px;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: nowrap;
+    }
+    .order-table {
+      flex: 1 1 340px;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 20px 18px 18px 18px;
+      min-width: 300px;
+      max-width: 420px;
+      box-shadow: var(--shadow);
+      border: var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .order-table h2 {
+      margin-top: 0;
+      font-size: 1.15rem;
+      border-bottom: 1px solid #e5eaf2;
+      padding-bottom: 8px;
+      letter-spacing: 0.02em;
+      font-weight: 600;
+      color: var(--primary-blue);
+      margin-bottom: 10px;
+      text-align: left;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0;
+    }
+    th, td {
+      padding: 7px 4px;
+      text-align: right;
+      font-size: 1rem;
+    }
+    th {
+      background: #f5f8fd;
+      border-bottom: 1px solid #e5eaf2;
+      font-weight: 600;
+      color: var(--primary-blue);
+    }
+    tr.best {
+      background: #eaf2ff;
+    }
+    .ask { color: var(--ask-color); font-weight: 500;}
+    .bid { color: var(--bid-color); font-weight: 500;}
+
+    @media (max-width: 900px) {
+      .order-book {
+        flex-direction: column;
+        gap: 0;
+        align-items: stretch;
+      }
+      .order-table {
+        min-width: unset;
+        max-width: unset;
+        margin-bottom: 24px;
+      }
+      .container {
+        padding: 12px;
+      }
+      .spread-top {
+        padding: 12px 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>XDB Order Book Viewer</h1>
+    </div>
+    <div class="spread-top">
+      <span><strong>Spread:</strong></span>
+      <span id="spread" class="spread-value">0.0000000</span>
+      <span id="trendIcon" class="trend-icon">📈</span>
+    </div>
+    <div class="controls">
+      <select id="pairSelect">
+        <option value="CBPAY:XDB">CBPAY / XDB</option>
+        <option value="HONEY:XDB">Honey / XDB</option>
+        <option value="BEEFI:XDB">BEEFI / XDB</option>
+      </select>
+    </div>
+    <div class="order-book">
+      <div class="order-table">
+        <h2>Asks</h2>
+        <table id="asksTable">
+          <thead><tr><th>Preço</th><th>Quantidade</th><th>Total</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="order-table">
+        <h2>Bids</h2>
+        <table id="bidsTable">
+          <thead><tr><th>Preço</th><th>Quantidade</th><th>Total</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <script>
+    // BOOK ORDER
+    const PAIRS = {
+      "CBPAY:XDB": {
+        selling: { type: "credit_alphanum12", code: "CBPAY", issuer: "GD7PT6VAXH227WBYR5KN3OYKGSNXVETMYZUP3R62DFX3BBC7GGOBDFJ2" },
+        buying: { type: "native" }
+      },
+      "HONEY:XDB": {
+        selling: { type: "credit_alphanum12", code: "HONEY", issuer: "GAZ5BEQZI67UEJAUEFT7IQHU7A4FXWJDULHLMICLHQ5RF3KLWIRMFZQP" },
+        buying: { type: "native" }
+      },
+      "BEEFI:XDB": {
+        selling: { type: "credit_alphanum12", code: "BEEFI", issuer: "GA6E22J3MFL5WZELZ64XQFI42CPJ6V7NMSGXAQKUJC4274GTSRRGUUXZ" },
+        buying: { type: "native" }
+      }
+    };
+
+    async function fetchOrderBook() {
+      const selected = document.getElementById("pairSelect").value;
+      const pair = PAIRS[selected];
+      if (!pair) return;
+
+      const url = new URL("http://localhost:3000/order_book");
+      Object.entries(pair.selling).forEach(([k, v]) => url.searchParams.append("selling_asset_" + k, v));
+      Object.entries(pair.buying).forEach(([k, v]) => url.searchParams.append("buying_asset_" + k, v));
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      renderTable("asksTable", data.asks, true);
+      renderTable("bidsTable", data.bids, false);
+
+      const bestAsk = parseFloat(data.asks[0]?.price || 0);
+      const bestBid = parseFloat(data.bids[0]?.price || 0);
+      const spread = bestAsk && bestBid ? (bestAsk - bestBid).toFixed(7) : "N/A";
+      document.getElementById("spread").textContent = spread;
+      document.getElementById("trendIcon").textContent = bestAsk > bestBid ? '📈' : '📉';
+    }
+
+    function renderTable(id, records, isAsk) {
+      const tbody = document.getElementById(id).querySelector("tbody");
+      tbody.innerHTML = "";
+      records.forEach((o, i) => {
+        const amount = parseFloat(o.amount);
+        const price = parseFloat(o.price);
+        const row = document.createElement("tr");
+        row.className = isAsk ? "ask" : "bid";
+        if (i === 0) row.classList.add("best");
+        row.innerHTML = `<td>${price.toFixed(7)}</td><td>${amount.toFixed(2)}</td><td>${(amount * price).toFixed(2)}</td>`;
+        tbody.appendChild(row);
+      });
+    }
+
+    document.getElementById("pairSelect").addEventListener("change", fetchOrderBook);
+    fetchOrderBook();
+    setInterval(fetchOrderBook, 10000);
+  </script>
+</body>
+</html>
+
+
+
